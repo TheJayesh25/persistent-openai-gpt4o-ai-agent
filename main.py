@@ -1,4 +1,8 @@
 import streamlit as st
+from agent import get_agent
+
+agent = get_agent()
+response = agent([HumanMessage(content=user_input)])
 
 st.set_page_config(page_title="GPT Assistant")
 
