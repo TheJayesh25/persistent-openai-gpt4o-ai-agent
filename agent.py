@@ -1,10 +1,22 @@
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage
+from langgraph.graph import StateGraph, START, END
+from langchain_core.messages import BaseMessage
+from typing import TypedDict, Sequence
+
+class AgentState(TypedDict):
+    messages: Sequence[BaseMessage]
 
 def get_agent():
+
     llm = ChatOpenAI(model="gpt-4o")
 
-    def run(messages):
-        return llm.invoke(messages)
+    def process(state: AgentState):
+        response = llm.invoke(state["messages"])
+        return {"messages": [response]}
 
-    return run
+    graph = StateGraph(AgentState)
+    graph.add_node("process", process)
+    graph.add_edge(START, "process")
+    graph.add_edge("process", END)
+
+    return graph.compile()
