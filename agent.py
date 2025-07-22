@@ -3,8 +3,11 @@ from langgraph.graph import StateGraph, START, END
 from langchain_core.messages import BaseMessage
 from typing import TypedDict, Sequence
 
+from operator import add as add_messages
+from typing import Annotated
+
 class AgentState(TypedDict):
-    messages: Sequence[BaseMessage]
+    messages: Annotated[Sequence[BaseMessage], add_messages]
 
 def get_agent():
 
