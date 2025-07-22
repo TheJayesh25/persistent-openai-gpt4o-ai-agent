@@ -17,6 +17,17 @@ CREATE TABLE IF NOT EXISTS chat_messages (
 )
 """)
 
+def save_message(role, content):
+    cursor.execute(
+        "INSERT INTO chat_messages (role, content) VALUES (?, ?)",
+        (role, content)
+    )
+    conn.commit()
+
+def load_messages():
+    cursor.execute("SELECT role, content FROM chat_messages")
+    return cursor.fetchall()
+
 st.set_page_config(page_title="GPT Assistant")
 
 st.title("GPT Assistant")
