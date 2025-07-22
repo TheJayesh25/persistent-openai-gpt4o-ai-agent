@@ -4,6 +4,19 @@ from agent import get_agent
 agent = get_agent()
 response = agent([HumanMessage(content=user_input)])
 
+import sqlite3
+
+conn = sqlite3.connect("chat_messages.db")
+cursor = conn.cursor()
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS chat_messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    role TEXT,
+    content TEXT
+)
+""")
+
 st.set_page_config(page_title="GPT Assistant")
 
 st.title("GPT Assistant")
