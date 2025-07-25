@@ -1,9 +1,9 @@
 import streamlit as st
 from agent import get_agent
-
-agent = get_agent()
-response = agent([HumanMessage(content=user_input)])
-
+import uuid
+from langchain_core.messages import (
+    HumanMessage,
+)
 import sqlite3
 
 conn = sqlite3.connect("chat_messages.db")
@@ -23,6 +23,8 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     content TEXT
 )
 """)
+
+session_id = str(uuid.uuid4())
 
 def save_message(role, content):
     cursor.execute(
@@ -56,3 +58,6 @@ if user_input:
 
     with st.chat_message("user"):
         st.markdown(user_input)
+
+agent = get_agent()
+response = agent([HumanMessage(content=user_input)])
