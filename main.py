@@ -10,6 +10,13 @@ conn = sqlite3.connect("chat_messages.db")
 cursor = conn.cursor()
 
 cursor.execute("""
+CREATE TABLE IF NOT EXISTS sessions (
+    id TEXT PRIMARY KEY,
+    name TEXT
+)
+""")
+
+cursor.execute("""
 CREATE TABLE IF NOT EXISTS chat_messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     role TEXT,
