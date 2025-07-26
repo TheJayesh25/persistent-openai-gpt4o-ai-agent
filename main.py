@@ -1,4 +1,5 @@
 import streamlit as st
+import os
 from agent import get_agent
 import uuid
 from langchain_core.messages import (
@@ -6,25 +7,32 @@ from langchain_core.messages import (
 )
 import sqlite3
 
-conn = sqlite3.connect("chat_messages.db")
+# -------------------- DATABASE SETUP --------------------
+db_path = os.path.join(os.path.dirname(__file__), "chat_messages.db")
+conn = sqlite3.connect(db_path)
 cursor = conn.cursor()
 
 cursor.execute("""
-CREATE TABLE IF NOT EXISTS sessions (
-    id TEXT PRIMARY KEY,
-    name TEXT
-)
+    CREATE TABLE IF NOT EXISTS sessions (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        user_hash TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
 """)
 
 cursor.execute("""
-CREATE TABLE IF NOT EXISTS chat_messages (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    role TEXT,
-    content TEXT
-)
+    CREATE TABLE IF NOT EXISTS chat_messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id TEXT NOT NULL,
+        type TEXT CHECK(type IN ('human', 'ai', 'system', 'tool', 'function')) NOT NULL,
+        content TEXT NOT NULL,
+        name TEXT,
+        tool_call_id TEXT,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
 """)
-
-session_id = str(uuid.uuid4())
+conn.commit()
 
 def save_message(role, content):
     cursor.execute(
