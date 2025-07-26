@@ -1,5 +1,6 @@
 import streamlit as st
 import os
+import hashlib
 from agent import get_agent
 import uuid
 from langchain_core.messages import (
@@ -33,6 +34,18 @@ cursor.execute("""
     )
 """)
 conn.commit()
+
+# -------------------- UTILITIES --------------------
+def hash_token(token: str) -> str:
+    """Hash the API token for secure session identification."""
+    return hashlib.sha256(token.encode()).hexdigest()
+
+def create_session(name: str, user_hash: str) -> str:
+    """Create a new session and return its UUID."""
+    session_id = str(uuid.uuid4())
+    cursor.execute("INSERT INTO sessions (id, name, user_hash) VALUES (?, ?, ?)", (session_id, name, user_hash))
+    conn.commit()
+    return session_id
 
 def save_message(role, content):
     cursor.execute(
