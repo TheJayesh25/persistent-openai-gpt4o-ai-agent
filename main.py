@@ -104,7 +104,32 @@ def save_history(session_id, new_messages):
         """, (data["session_id"], data["type"], data["content"], data["name"], data["tool_call_id"]))
     conn.commit()
 
-st.set_page_config(page_title="GPT Assistant")
+# -------------------- AUTH GATE (OPENAI API) --------------------
+st.set_page_config(page_title="GPT-4o Agent", page_icon="🧠")
+
+if "openai_api_key" not in st.session_state:
+    st.title("🔐 GPT-4o Agent (OpenAI)")
+    st.markdown("""
+    This app uses **OpenAI GPT-4o** via your own API key.
+
+    🔑 Please enter your **OpenAI API key** to continue.
+
+    - You can create one here: [https://platform.openai.com/account/api-keys](https://platform.openai.com/account/api-keys)
+    """)
+
+    token_input = st.text_input("Enter your OpenAI API Key:", type="password")
+
+    if st.button("Start Chatting") and token_input:
+        try:
+            # Validate token by invoking a test query
+            temp_agent = get_agent(token_input)
+            _ = temp_agent.invoke({"messages": [HumanMessage(content="Hello!")]})
+            st.session_state["openai_api_key"] = token_input
+            st.session_state["user_hash"] = hash_token(token_input)
+            st.rerun()
+        except Exception:
+            st.error("❌ Invalid token. Please check and try again.")
+    st.stop()
 
 st.title("GPT Assistant")
 
