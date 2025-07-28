@@ -5,6 +5,11 @@ from agent import get_agent
 import uuid
 from langchain_core.messages import (
     HumanMessage,
+    SystemMessage,
+    AIMessage,
+    FunctionMessage,
+    ToolMessage,
+    BaseMessage,
 )
 import sqlite3
 
@@ -46,6 +51,42 @@ def create_session(name: str, user_hash: str) -> str:
     cursor.execute("INSERT INTO sessions (id, name, user_hash) VALUES (?, ?, ?)", (session_id, name, user_hash))
     conn.commit()
     return session_id
+
+def get_sessions_by_user(user_hash: str):
+    """Fetch all sessions associated with a user hash."""
+    cursor.execute("SELECT id, name FROM sessions WHERE user_hash = ? ORDER BY created_at DESC", (user_hash,))
+    return cursor.fetchall()
+
+def serialize_message(msg: BaseMessage, session_id: str):
+    """Convert a message into a row format for storage."""
+    base = {
+        "session_id": session_id,
+        "type": msg.type,
+        "content": msg.content,
+        "name": None,
+        "tool_call_id": None
+    }
+    if isinstance(msg, FunctionMessage):
+        base["name"] = msg.name
+    elif isinstance(msg, ToolMessage):
+        base["tool_call_id"] = msg.tool_call_id
+    return base
+
+def deserialize_message(row: tuple) -> BaseMessage:
+    """Convert a DB row back to a LangChain message."""
+    msg_type, content, name, tool_call_id = row
+    if msg_type == "human":
+        return HumanMessage(content=content)
+    elif msg_type == "ai":
+        return AIMessage(content=content)
+    elif msg_type == "system":
+        return SystemMessage(content=content)
+    elif msg_type == "function":
+        return FunctionMessage(content=content, name=name or "function_1")
+    elif msg_type == "tool":
+        return ToolMessage(content=content, tool_call_id=tool_call_id or "tool_1")
+    else:
+        raise ValueError(f"Unknown message type: {msg_type}")
 
 def save_message(role, content):
     cursor.execute(
