@@ -131,25 +131,41 @@ if "openai_api_key" not in st.session_state:
             st.error("❌ Invalid token. Please check and try again.")
     st.stop()
 
-st.title("GPT Assistant")
+# -------------------- STREAMLIT APP --------------------
+st.title("🧠 GPT-4o Assistant (OpenAI)")
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+# ---- SIDEBAR SESSION MANAGER ----
+with st.sidebar:
+    st.header("💬 Sessions")
 
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+    if "user_hash" not in st.session_state:
+        st.error("Authentication error. Please log in again.")
+        st.stop()
 
-user_input = st.chat_input("Ask something")
+    sessions = get_sessions_by_user(st.session_state["user_hash"])
+    session_names = [s[1] for s in sessions]
+    selected_option = st.selectbox("Select session", session_names + ["➕ New session"])
 
-if user_input:
-    st.session_state.messages.append({
-        "role": "user",
-        "content": user_input
-    })
+    if selected_option == "➕ New session":
+        new_session_name = st.text_input("Enter session name")
+        if new_session_name and st.button("Create Session"):
+            selected_id = create_session(new_session_name, st.session_state["user_hash"])
+            st.session_state.session_id = selected_id
+            st.session_state.messages = []
+            st.rerun()
+        elif "session_id" not in st.session_state:
+            st.stop()
+        else:
+            selected_id = st.session_state.session_id
+    else:
+        selected_id = next(s[0] for s in sessions if s[1] == selected_option)
+        if st.session_state.get("session_id") != selected_id:
+            st.session_state.session_id = selected_id
+            st.session_state.messages = load_history(selected_id)
+            st.rerun()
 
-    with st.chat_message("user"):
-        st.markdown(user_input)
-
-agent = get_agent()
-response = agent([HumanMessage(content=user_input)])
+    st.markdown("---")
+    if st.button("🔒 Log out"):
+        for k in ["openai_api_key", "user_hash", "session_id", "messages"]:
+            st.session_state.pop(k, None)
+        st.rerun()
