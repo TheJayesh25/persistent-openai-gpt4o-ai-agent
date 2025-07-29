@@ -169,3 +169,17 @@ with st.sidebar:
         for k in ["openai_api_key", "user_hash", "session_id", "messages"]:
             st.session_state.pop(k, None)
         st.rerun()
+
+# ---- INITIALIZE MEMORY ----
+if "messages" not in st.session_state:
+    history = load_history(st.session_state.session_id)
+    if not history:
+        history = [SystemMessage(content="You are a helpful assistant. Answer concisely.")]
+    st.session_state.messages = history
+
+# ---- DISPLAY CHAT MESSAGES ----
+for msg in st.session_state.messages:
+    if isinstance(msg, SystemMessage):
+        continue
+    with st.chat_message("user" if isinstance(msg, HumanMessage) else "assistant"):
+        st.markdown(msg.content)
