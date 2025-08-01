@@ -1,8 +1,8 @@
 import streamlit as st
 import os
-import hashlib
-from agent import get_agent
+import sqlite3
 import uuid
+import hashlib
 from langchain_core.messages import (
     HumanMessage,
     SystemMessage,
@@ -11,7 +11,7 @@ from langchain_core.messages import (
     ToolMessage,
     BaseMessage,
 )
-import sqlite3
+from agent import get_agent
 
 # -------------------- DATABASE SETUP --------------------
 db_path = os.path.join(os.path.dirname(__file__), "chat_messages.db")
