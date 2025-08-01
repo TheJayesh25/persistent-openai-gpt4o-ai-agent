@@ -183,3 +183,29 @@ for msg in st.session_state.messages:
         continue
     with st.chat_message("user" if isinstance(msg, HumanMessage) else "assistant"):
         st.markdown(msg.content)
+
+# ---- CHAT INPUT ----
+user_input = st.chat_input("Ask me anything...")
+
+if user_input:
+    user_msg = HumanMessage(content=user_input)
+    st.session_state.messages.append(user_msg)
+
+    with st.chat_message("user"):
+        st.markdown(user_input)
+
+    with st.chat_message("assistant"):
+        placeholder = st.empty()
+        placeholder.markdown("_Thinking..._")
+
+    agent = get_agent(st.session_state["openai_api_key"])
+    result = agent.invoke({"messages": st.session_state.messages})
+
+    new_messages = result["messages"][len(st.session_state.messages):]
+    st.session_state.messages = result["messages"]
+
+    if new_messages:
+        bot_reply = new_messages[0].content
+        placeholder.markdown(bot_reply)
+
+    save_history(st.session_state.session_id, [user_msg, new_messages[0]])
