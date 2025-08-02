@@ -1,10 +1,8 @@
 from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, START, END
 from langchain_core.messages import BaseMessage
-from typing import TypedDict, Sequence
-
+from typing import TypedDict, Annotated, Sequence
 from operator import add as add_messages
-from typing import Annotated
 
 class AgentState(TypedDict):
     """
@@ -23,13 +21,19 @@ def make_process(llm):
         return {"messages": [response]}  # LangGraph will merge this with previous state
     return process
 
-def get_agent():
-
-    llm = ChatOpenAI(model="gpt-4o")
+def get_agent(api_key: str):
+    """
+    Constructs and compiles a LangGraph agent with memory-based state handling.
+    Returns the compiled agent ready to invoke.
+    """
+    llm = ChatOpenAI(
+        model="gpt-4o",
+        temperature=0.7,
+        openai_api_key=api_key  # Use session key here
+    )
 
     graph = StateGraph(AgentState)
-    graph.add_node("process", process)
+    graph.add_node("process", make_process(llm))
     graph.add_edge(START, "process")
     graph.add_edge("process", END)
-
     return graph.compile()
