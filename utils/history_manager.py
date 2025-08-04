@@ -1,3 +1,6 @@
+from serialize_message import serialize_message
+from deserialize_message import deserialize_message
+
 def load_history(session_id):
     """Load all messages for a given session."""
     cursor.execute("SELECT type, content, name, tool_call_id FROM chat_messages WHERE session_id = ?", (session_id,))
