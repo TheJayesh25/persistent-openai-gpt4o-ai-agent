@@ -1,3 +1,11 @@
+from langchain_core.messages import (
+    HumanMessage,
+    SystemMessage,
+    AIMessage,
+    FunctionMessage,
+    ToolMessage,
+    BaseMessage,
+)
 def deserialize_message(row: tuple) -> BaseMessage:
     """Convert a DB row back to a LangChain message."""
     msg_type, content, name, tool_call_id = row
