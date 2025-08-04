@@ -41,68 +41,12 @@ cursor.execute("""
 conn.commit()
 
 # -------------------- UTILITIES --------------------
-def hash_token(token: str) -> str:
-    """Hash the API token for secure session identification."""
-    return hashlib.sha256(token.encode()).hexdigest()
-
-def create_session(name: str, user_hash: str) -> str:
-    """Create a new session and return its UUID."""
-    session_id = str(uuid.uuid4())
-    cursor.execute("INSERT INTO sessions (id, name, user_hash) VALUES (?, ?, ?)", (session_id, name, user_hash))
-    conn.commit()
-    return session_id
-
-def get_sessions_by_user(user_hash: str):
-    """Fetch all sessions associated with a user hash."""
-    cursor.execute("SELECT id, name FROM sessions WHERE user_hash = ? ORDER BY created_at DESC", (user_hash,))
-    return cursor.fetchall()
-
-def serialize_message(msg: BaseMessage, session_id: str):
-    """Convert a message into a row format for storage."""
-    base = {
-        "session_id": session_id,
-        "type": msg.type,
-        "content": msg.content,
-        "name": None,
-        "tool_call_id": None
-    }
-    if isinstance(msg, FunctionMessage):
-        base["name"] = msg.name
-    elif isinstance(msg, ToolMessage):
-        base["tool_call_id"] = msg.tool_call_id
-    return base
-
-def deserialize_message(row: tuple) -> BaseMessage:
-    """Convert a DB row back to a LangChain message."""
-    msg_type, content, name, tool_call_id = row
-    if msg_type == "human":
-        return HumanMessage(content=content)
-    elif msg_type == "ai":
-        return AIMessage(content=content)
-    elif msg_type == "system":
-        return SystemMessage(content=content)
-    elif msg_type == "function":
-        return FunctionMessage(content=content, name=name or "function_1")
-    elif msg_type == "tool":
-        return ToolMessage(content=content, tool_call_id=tool_call_id or "tool_1")
-    else:
-        raise ValueError(f"Unknown message type: {msg_type}")
-
-def load_history(session_id):
-    """Load all messages for a given session."""
-    cursor.execute("SELECT type, content, name, tool_call_id FROM chat_messages WHERE session_id = ?", (session_id,))
-    rows = cursor.fetchall()
-    return [deserialize_message(m) for m in rows] if rows else []
-
-def save_history(session_id, new_messages):
-    """Save a batch of new messages to the DB."""
-    for msg in new_messages:
-        data = serialize_message(msg, session_id)
-        cursor.execute("""
-            INSERT INTO chat_messages (session_id, type, content, name, tool_call_id)
-            VALUES (?, ?, ?, ?, ?)
-        """, (data["session_id"], data["type"], data["content"], data["name"], data["tool_call_id"]))
-    conn.commit()
+from utils.hash_token import hash_token
+from utils.create_session import create_session
+from utils.get_sessions_by_user import get_sessions_by_user
+from utils.serialize_message import serialize_message
+from utils.deserialize_message import deserialize_message
+from utils.history_manager import load_history, save_history
 
 # -------------------- AUTH GATE (OPENAI API) --------------------
 st.set_page_config(page_title="GPT-4o Agent", page_icon="🧠")
